@@ -1,0 +1,30 @@
+# Virtual environments
+.venv/
+.test-venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Capturas de áudio
+capturas/
+
+# OS
+.DS_Store
+Thumbs.db
