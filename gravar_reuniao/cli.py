@@ -24,7 +24,7 @@ Exemplos:
     )
     parser.add_argument(
         "--output", type=str,
-        help="Arquivo de saída (padrão: audio_YYYYMMDD_HHMMSS.wav)"
+        help="Arquivo de saída (padrão: audio_YYYYMMDD_HHMMSS.flac)"
     )
     parser.add_argument(
         "--duration", type=int,
@@ -41,11 +41,11 @@ Exemplos:
     if args.output:
         output_path = Path(args.output)
         if not output_path.suffix:
-            output_path = output_path.with_suffix('.wav')
+            output_path = output_path.with_suffix('.flac')
         if not output_path.is_absolute():
             output_path = output_dir / output_path
     else:
-        output_path = output_dir / f"audio_{timestamp}.wav"
+        output_path = output_dir / f"audio_{timestamp}.flac"
     
     try:
         if not record_audio(output_path, args.duration):

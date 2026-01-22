@@ -35,10 +35,10 @@ def record_audio(output_path, duration=None):
         "-f", "pulse", "-i", monitor_name,
         "-f", "pulse", "-i", source_name,
         "-filter_complex", filter_complex,
-        "-acodec", "pcm_s16le",
+        "-acodec", "flac",
+        "-compression_level", "8",
         "-ac", "2",
         "-ar", "48000",
-        "-f", "wav",
         "-y",
         str(output_path)
     ]
@@ -49,26 +49,46 @@ def record_audio(output_path, duration=None):
             cmd.extend(["-t", str(duration)])
             process = subprocess.Popen(
                 cmd,
+                stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
             try:
                 process.wait(timeout=duration + 5)
             except subprocess.TimeoutExpired:
-                process.terminate()
-                process.wait()
+                # Tentar parar graciosamente com 'q' primeiro
+                try:
+                    if process.stdin:
+                        process.stdin.write(b'q')
+                        process.stdin.flush()
+                        process.stdin.close()
+                    process.wait(timeout=2)
+                except (subprocess.TimeoutExpired, OSError):
+                    # Se não funcionar, usar terminate como último recurso
+                    process.terminate()
+                    process.wait()
         else:
             print("Gravando... (Ctrl+C para parar)")
             process = subprocess.Popen(
                 cmd,
+                stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
             try:
                 process.wait()
             except KeyboardInterrupt:
-                process.terminate()
-                process.wait()
+                # Parar graciosamente enviando 'q' para o ffmpeg finalizar corretamente
+                try:
+                    if process.stdin:
+                        process.stdin.write(b'q')
+                        process.stdin.flush()
+                        process.stdin.close()
+                    process.wait()
+                except (OSError, BrokenPipeError):
+                    # Se o stdin já estiver fechado, usar terminate como fallback
+                    process.terminate()
+                    process.wait()
                 print("\nParando gravação...")
         
         if output_path.exists() and output_path.stat().st_size > 0:
