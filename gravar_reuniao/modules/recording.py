@@ -78,18 +78,28 @@ def record_audio(output_path, duration=None):
             try:
                 process.wait()
             except KeyboardInterrupt:
-                # Parar graciosamente enviando 'q' para o ffmpeg finalizar corretamente
-                try:
-                    if process.stdin:
-                        process.stdin.write(b'q')
-                        process.stdin.flush()
-                        process.stdin.close()
-                    process.wait()
-                except (OSError, BrokenPipeError):
-                    # Se o stdin já estiver fechado, usar terminate como fallback
-                    process.terminate()
-                    process.wait()
                 print("\nParando gravação...")
+                try:
+                    if process.stdin and not process.stdin.closed:
+                        try:
+                            process.stdin.write(b'q')
+                            process.stdin.flush()
+                        except (OSError, BrokenPipeError):
+                            pass
+                        finally:
+                            try:
+                                if not process.stdin.closed:
+                                    process.stdin.close()
+                            except (OSError, BrokenPipeError):
+                                pass
+                    process.wait(timeout=2)
+                except (OSError, BrokenPipeError, subprocess.TimeoutExpired):
+                    try:
+                        process.terminate()
+                        process.wait(timeout=2)
+                    except:
+                        process.kill()
+                        process.wait()
         
         if output_path.exists() and output_path.stat().st_size > 0:
             abs_path = output_path.resolve()
